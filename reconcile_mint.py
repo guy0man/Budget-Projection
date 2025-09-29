@@ -19,7 +19,6 @@ def _ensure_cols(df, cols_defaults):
 # Key builders
 # ---------------------------
 def build_bottom_index(df):
-    """Unique bottom series (Department x SourceOfFund or SourceOfFund='TOTAL')."""
     df = _ensure_cols(df, {"Department": "TOTAL", "SourceOfFund": "TOTAL"})
     keys = df[["Department", "SourceOfFund"]].copy()
     keys["Department"]   = _norm_text(keys["Department"])
@@ -29,7 +28,6 @@ def build_bottom_index(df):
     return keys
 
 def build_S(keys):
-    """Summing matrix S mapping bottoms -> [Grand, Department totals, Bottoms]."""
     depts = keys["Department"].drop_duplicates().tolist()
     n = len(keys)         # bottoms
     D = len(depts)        # department totals
@@ -59,10 +57,6 @@ def build_S(keys):
 # Variance estimation for WLS
 # ---------------------------
 def estimate_var(df, keys, qcol="P50", min_var=1.0):
-    """
-    Returns variance per bottom series (array of length n_bottoms).
-    Uses residuals (Actual - qcol) per bottom; falls back safely if insufficient data.
-    """
     df = _ensure_cols(df, {"Department": "TOTAL", "SourceOfFund": "TOTAL"})
     if ("Actual" not in df.columns) or (qcol not in df.columns):
         return np.full(len(keys), float(min_var))
@@ -99,10 +93,6 @@ def estimate_var(df, keys, qcol="P50", min_var=1.0):
 # MinT reconciliation for one date/quantile
 # ---------------------------
 def mint_date(S, var_b, y_b):
-    """
-    Reconcile bottom forecasts y_b using MinT (WLS).
-    Uses pseudo-inverse for numerical stability.
-    """
     y_b = np.asarray(y_b, dtype=float)
     y_b = np.nan_to_num(y_b, nan=0.0)
 
@@ -124,15 +114,6 @@ def mint_date(S, var_b, y_b):
 # Public API
 # ---------------------------
 def reconcile(df_pred, quant_cols=("P10","P50","P90")):
-    """
-    MinT reconciliation (WLS) by Date.
-    - df_pred columns required: Date, Department, SourceOfFund (optional), and any quant_cols.
-      'Actual' optional (for variance estimation).
-    Returns:
-      df_bottom: coherent bottom-level forecasts with all provided quantiles
-                 (columns: Date, Department, SourceOfFund, P10/P50/P90…)
-      df_totals: grand & department totals for P50 (columns: Date, Series, P50)
-    """
     if df_pred.empty:
         return pd.DataFrame(), pd.DataFrame()
 

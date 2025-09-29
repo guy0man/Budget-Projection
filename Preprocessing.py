@@ -198,10 +198,6 @@ num_cols = [c for c in [
 ] if c in panel.columns]
 panel[num_cols] = panel[num_cols].fillna(0)
 
-# (Optional) Drop troublesome categorical modes if you won’t use them
-# if "TuitionPolicy_mode" in panel.columns:
-#     panel = panel.drop(columns=["TuitionPolicy_mode"])
-
 # -----------------------------
 # Train/Validation split
 # -----------------------------
